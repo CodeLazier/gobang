@@ -31,58 +31,74 @@ func checkChessSuccess(p:Vector2)->bool:
 	var y:int=p.y
 	var c=getChessState(x,y)
 	
+	var ha=[p]
+	var va=[p]
+	var sa_d=[p]
+	var sa_u=[p]
+	
 	#横
-	var t:int=0
-	for i in range(x+1,x+4):
+	for i in range(x+1,x+5):
 		if getChessState(i,y)!=c:
 			break
 		else:
-			t+=1
+			ha.append(Vector2(i,y))
 			
-	for i in range(x-1,x-4,-1):
+	for i in range(x-1,x-5,-1):
 		if getChessState(i,y)!=c:
 			break
 		else:
-			t+=1
+			ha.append(Vector2(i,y))
 			
-	print("横线:",t)
-	if t>3:
+	#竖
+	for i in range(y+1,y+5):
+		if getChessState(x,i)!=c:
+			break
+		else:
+			va.append(Vector2(x,i))
+			
+	for i in range(y-1,y-5,-1):
+		if getChessState(x,i)!=c:
+			break
+		else:
+			va.append(Vector2(x,i))
+			
+	#斜下
+	for i in range(1,5):
+		if getChessState(x+i,y+i)!=c:
+			break
+		else:
+			sa_d.append(Vector2(x+i,y+i))
+			
+	for i in range(-1,-5,-1):
+		if getChessState(x+i,y+i)!=c:
+			break
+		else:
+			sa_d.append(Vector2(x+i,y+i))
+			
+	#斜上
+	for i in range(1,5):
+		if getChessState(x+i,y-i)!=c:
+			break
+		else:
+			sa_d.append(Vector2(x+i,y-i))
+			
+	for i in range(-1,-5,-1):
+		if getChessState(x+i,y-i)!=c:
+			break
+		else:
+			sa_d.append(Vector2(x+i,y-i))
+			
+			
+	print("横线:",ha.size())
+	if ha.size()>4:
 		return true
 		
-	#竖
-	t=0
-	for i in range(y+1,y+4):
-		if getChessState(x,i)!=c:
-			break
-		else:
-			t+=1
-			
-	for i in range(y-1,y-4,-1):
-		if getChessState(x,i)!=c:
-			break
-		else:
-			t+=1
-			
-	print("竖线:",t)
-	if t>3:
+	print("竖线:",va.size())
+	if va.size()>4:
 		return true
-	
-	t=0
-	#斜
-	for i in range(x+1,x+4):
-		if getChessState(i,y+i-x)!=c:
-			break
-		else:
-			t+=1
-			
-	for i in range(x-1,x-4,-1):
-		if getChessState(i,y-i-x)!=c:
-			break
-		else:
-			t+=1
-			
-	print("斜线:",t)
-	if t>3:
+		
+	print("斜线:",sa_d.size()," ",sa_u.size())
+	if sa_d.size()>4 || sa_u.size()>4:
 		return true
 	
 	return false
@@ -131,7 +147,7 @@ func downChess(e:InputEventMouseButton):
 			else:
 				Current_Input=CHESS_BLACK
 		else:
-			pass
+			$Label.text="ok"
 			#赢了
 			
 
