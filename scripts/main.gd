@@ -82,7 +82,6 @@ func checkChessSuccess(p:Vector2)->bool:
 			t+=1
 			
 	print("斜线:",t)
-	
 	if t>3:
 		return true
 	
