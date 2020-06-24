@@ -1,29 +1,51 @@
 extends Sprite
 
-
-# Declare member variables here. Examples:
-# var a: int = 2
-# var b: String = "text"
-var gb_texture:Texture
-var gw_texture:Texture
-
 const CHESS_SPACE:Vector2=Vector2(35.36,35.36)
 const CHESS_ORIGIN:Vector2=Vector2(22,23)
 const CHESS_SPACE_H:Vector2=Vector2(35,0)
 const CHESS_SPACE_V:Vector2=Vector2(0,35)
-const CHESS_WHITE=2
-const CHESS_BLACK=1
-const CHESS_BLANK=0
-const CHESS_INVILID=-1
 const CHESS_NUMBER=15
 var CHESS_ARRAY=[]
+var IS_WIN:bool
 
-var Current_Input:int=CHESS_BLACK
+var chessScene;
+
+
+var Current_Input:int
+
+func init()->void:
+	for s in CHESS_ARRAY:
+		if s!=null:
+			s.queue_free()
+			
+	IS_WIN=false
+	Current_Input=Global.CHESS_COLOR.CC_BLACK
+	CHESS_ARRAY.resize(0)
+	CHESS_ARRAY.resize(15*15)
+	$chessTip.texture=Global.gb_texture
+
+func setChess(x,y:int,s:Chess)->void:
+	if x<0 || x>CHESS_NUMBER-1 || y<0 || y>CHESS_NUMBER-1:
+		return
+		
+	CHESS_ARRAY[x+y*CHESS_NUMBER]=s
+
+func getChess(x,y:int)->Chess:
+	if x<0 || x>CHESS_NUMBER-1 || y<0 || y>CHESS_NUMBER-1:
+		return null
+		
+	return CHESS_ARRAY[x+y*CHESS_NUMBER] as Chess
 
 func getChessState(x,y:int)->int:
-	if x<0 || x>CHESS_NUMBER-1 || y<0 || y>CHESS_NUMBER-1:
-		return CHESS_INVILID
-	return CHESS_ARRAY[x+y*CHESS_NUMBER]
+	var sprite=getChess(x,y)
+	if sprite!=null:
+		return (sprite as Chess).ChessColor
+		
+	return Global.CHESS_COLOR.CC_INVALID
+		
+func checkChessFull()->bool:
+	return CHESS_ARRAY.count(null)==0
+		
 #检查是否五子连通
 #p 最后下的位置
 func checkChessSuccess(p:Vector2)->bool:
@@ -37,30 +59,30 @@ func checkChessSuccess(p:Vector2)->bool:
 	var sa_u=[p]
 	
 	#横
-	for i in range(x+1,x+5):
-		if getChessState(i,y)!=c:
+	for i in range(1,5):
+		if getChessState(i+x,y)!=c:
 			break
 		else:
-			ha.append(Vector2(i,y))
+			ha.append(Vector2(i+x,y))
 			
-	for i in range(x-1,x-5,-1):
-		if getChessState(i,y)!=c:
+	for i in range(-1,-5,-1):
+		if getChessState(i+x,y)!=c:
 			break
 		else:
-			ha.append(Vector2(i,y))
+			ha.append(Vector2(i+x,y))
 			
 	#竖
-	for i in range(y+1,y+5):
-		if getChessState(x,i)!=c:
+	for i in range(1,5):
+		if getChessState(x,i+y)!=c:
 			break
 		else:
-			va.append(Vector2(x,i))
+			va.append(Vector2(x,i+y))
 			
-	for i in range(y-1,y-5,-1):
-		if getChessState(x,i)!=c:
+	for i in range(-1,-5,-1):
+		if getChessState(x,i+y)!=c:
 			break
 		else:
-			va.append(Vector2(x,i))
+			va.append(Vector2(x,i+y))
 			
 	#斜下
 	for i in range(1,5):
@@ -80,53 +102,60 @@ func checkChessSuccess(p:Vector2)->bool:
 		if getChessState(x+i,y-i)!=c:
 			break
 		else:
-			sa_d.append(Vector2(x+i,y-i))
+			sa_u.append(Vector2(x+i,y-i))
 			
 	for i in range(-1,-5,-1):
 		if getChessState(x+i,y-i)!=c:
 			break
 		else:
-			sa_d.append(Vector2(x+i,y-i))
+			sa_u.append(Vector2(x+i,y-i))
 			
 			
 	print("横线:",ha.size())
-	if ha.size()>4:
-		return true
-		
 	print("竖线:",va.size())
-	if va.size()>4:
-		return true
-		
 	print("斜线:",sa_d.size()," ",sa_u.size())
-	if sa_d.size()>4 || sa_u.size()>4:
+	
+	if ha.size()>4 || va.size()>4 || sa_d.size()>4 || sa_u.size()>4:
+		print("---",ha)
+		print("|",va)
+		print('/',sa_u)
+		print('\\',sa_d)
+		
+		if ha.size()>4:
+			for p in ha:
+				getChess(p.x,p.y).flash()
+				
+		if va.size()>4:
+			for p in va:
+				getChess(p.x,p.y).flash()
+				
+		if sa_d.size()>4:
+			for p in sa_d:
+				getChess(p.x,p.y).flash()
+				
+				
+		if sa_u.size()>4:
+			for p in sa_u:
+				getChess(p.x,p.y).flash()
 		return true
 	
-	return false
-	
+	return checkChessFull()
+
+
 #v 逻辑坐标
-func createChess(v:Vector2,white:bool)->Sprite:
+func createChess(v:Vector2,cc:int)->Sprite:
 	var x:int=round(v.x)
 	var y:int=round(v.y)
 	if x<0 || x>CHESS_NUMBER-1 || y<0 || y>CHESS_NUMBER-1:
 		return null
-		
-	var index:int=x+y*CHESS_NUMBER
-	var cv=CHESS_ARRAY[index]
-	if cv!=null && cv>0:
+
+	if getChess(x,y)!=null:
 		return null
 		
-	var sprite=Sprite.new()
-	if white:
-		sprite.texture=gw_texture
-	else:
-		sprite.texture=gb_texture
-
-	var flag:int=CHESS_WHITE
-	if !white:
-		flag=CHESS_BLACK
-	CHESS_ARRAY[index]=flag
-	
+	var sprite=chessScene.instance()
+	sprite.ChessColor=cc
 	sprite.position=Vector2(x,y) * CHESS_SPACE + CHESS_ORIGIN
+	setChess(x,y,sprite)
 	
 	add_child(sprite)
 	return sprite
@@ -134,29 +163,37 @@ func createChess(v:Vector2,white:bool)->Sprite:
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	gb_texture=preload("res://assets/textures/gb.png")
-	gw_texture=preload("res://assets/textures/gw.png")
-	CHESS_ARRAY.resize(CHESS_NUMBER*CHESS_NUMBER)
+	chessScene=preload('res://scenes/chess.tscn')
+	$CenterContainer/Button.visible=false
+	init()
 
 func downChess(e:InputEventMouseButton):
 	var v=(e.position - CHESS_ORIGIN) / CHESS_SPACE
-	if createChess(v,Current_Input==CHESS_WHITE)!=null:
+	if createChess(v,Current_Input)!=null:
 		if !checkChessSuccess(v.round()):
-			if Current_Input==CHESS_BLACK:
-				Current_Input=CHESS_WHITE
+			if Current_Input==Global.CHESS_COLOR.CC_BLACK:
+				Current_Input=Global.CHESS_COLOR.CC_WHITE
+				$chessTip.texture=Global.gw_texture
 			else:
-				Current_Input=CHESS_BLACK
+				Current_Input=Global.CHESS_COLOR.CC_BLACK
+				$chessTip.texture=Global.gb_texture
 		else:
-			$Label.text="ok"
+			$CenterContainer/Button.visible=true
+			IS_WIN=true
 			#赢了
 			
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var e=event as InputEventMouseButton
-		if e.pressed:
+		if e.pressed && !IS_WIN:
 			downChess(e)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 #func _process(delta: float) -> void:
 #	pass
+
+
+func _on_Button_pressed() -> void:
+	$CenterContainer/Button.visible=false
+	init()

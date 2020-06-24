@@ -8,9 +8,14 @@
 
 config_version=4
 
-_global_script_classes=[  ]
+_global_script_classes=[ {
+"base": "Sprite",
+"class": "Chess",
+"language": "GDScript",
+"path": "res://scripts/chess.gd"
+} ]
 _global_script_class_icons={
-
+"Chess": ""
 }
 
 [application]
@@ -20,6 +25,10 @@ run/main_scene="res://scenes/main.tscn"
 boot_splash/image="res://assets/textures/blank.png"
 boot_splash/bg_color=Color( 0, 0, 0, 1 )
 config/icon="res://icon.png"
+
+[autoload]
+
+Global="*res://scripts/global.gd"
 
 [display]
 
@@ -38,5 +47,4 @@ pointing/emulate_touch_from_mouse=true
 quality/driver/driver_name="GLES2"
 vram_compression/import_etc=true
 vram_compression/import_etc2=false
-environment/default_clear_color=Color( 0, 0, 0, 1 )
 environment/default_environment="res://default_env.tres"
