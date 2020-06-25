@@ -7,11 +7,15 @@ const CHESS_SPACE_V:Vector2=Vector2(0,35)
 const CHESS_NUMBER=15
 var CHESS_ARRAY=[]
 var IS_WIN:bool
+var IS_CONFIRM:bool=false
 
-var chessScene;
-
+var chessScene=preload('res://assets/scenes/chess.tscn')
+onready var btn_restart:Button=$CenterContainer/Button
+onready var chessTip:Sprite=$chessTip
+onready var downChessSample:AudioStreamPlayer=$downChessSample
 
 var Current_Input:int
+var LastChess:Chess=null
 
 func init()->void:
 	for s in CHESS_ARRAY:
@@ -22,7 +26,7 @@ func init()->void:
 	Current_Input=Global.CHESS_COLOR.CC_BLACK
 	CHESS_ARRAY.resize(0)
 	CHESS_ARRAY.resize(15*15)
-	$chessTip.texture=Global.gb_texture
+	chessTip.texture=Global.gb_texture
 
 func setChess(x,y:int,s:Chess)->void:
 	if x<0 || x>CHESS_NUMBER-1 || y<0 || y>CHESS_NUMBER-1:
@@ -152,36 +156,48 @@ func createChess(v:Vector2,cc:int)->Sprite:
 	if getChess(x,y)!=null:
 		return null
 		
+	downChessSample.play()
 	var sprite=chessScene.instance()
 	sprite.ChessColor=cc
 	sprite.position=Vector2(x,y) * CHESS_SPACE + CHESS_ORIGIN
-	setChess(x,y,sprite)
-	
-	add_child(sprite)
-	return sprite
-	
+	LastChess=sprite
+	add_child(sprite) # first must
+	sprite.confirm()
 
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	chessScene=preload('res://scenes/chess.tscn')
-	$CenterContainer/Button.visible=false
-	init()
+
+	return sprite
 
 func downChess(e:InputEventMouseButton):
 	var v=(e.position - CHESS_ORIGIN) / CHESS_SPACE
-	if createChess(v,Current_Input)!=null:
+	var vx=round(v.x)
+	var vy=round(v.y)
+	if IS_CONFIRM && LastChess!=null && getChess(vx,vy)==null:
+		var lastP=((LastChess.position - CHESS_ORIGIN) / CHESS_SPACE ).round()
+		setChess(lastP.x,lastP.y,null)
+		LastChess.queue_free()
+		LastChess=null
+		IS_CONFIRM=false
+	
+	
+	var sprite= createChess(v,Current_Input)
+	if sprite!=null:
+		setChess(vx,vy,sprite)
+		IS_CONFIRM=true
+		yield(sprite,'confirm_signal')
+		IS_CONFIRM=false
+		
 		if !checkChessSuccess(v.round()):
 			if Current_Input==Global.CHESS_COLOR.CC_BLACK:
 				Current_Input=Global.CHESS_COLOR.CC_WHITE
-				$chessTip.texture=Global.gw_texture
+				chessTip.texture=Global.gw_texture
 			else:
 				Current_Input=Global.CHESS_COLOR.CC_BLACK
-				$chessTip.texture=Global.gb_texture
+				chessTip.texture=Global.gb_texture
 		else:
-			$CenterContainer/Button.visible=true
+			#Win
 			IS_WIN=true
-			#赢了
-			
+			btn_restart.visible=true
+
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -189,11 +205,10 @@ func _input(event: InputEvent) -> void:
 		if e.pressed && !IS_WIN:
 			downChess(e)
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta: float) -> void:
-#	pass
-
+func _ready() -> void:
+	btn_restart.visible=false
+	init()
 
 func _on_Button_pressed() -> void:
-	$CenterContainer/Button.visible=false
+	btn_restart.visible=false
 	init()

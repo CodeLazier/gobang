@@ -12,7 +12,7 @@ _global_script_classes=[ {
 "base": "Sprite",
 "class": "Chess",
 "language": "GDScript",
-"path": "res://scripts/chess.gd"
+"path": "res://assets/scripts/chess.gd"
 } ]
 _global_script_class_icons={
 "Chess": ""
@@ -21,14 +21,14 @@ _global_script_class_icons={
 [application]
 
 config/name="gobang"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://assets/scenes/main.tscn"
 boot_splash/image="res://assets/textures/blank.png"
 boot_splash/bg_color=Color( 0, 0, 0, 1 )
 config/icon="res://icon.png"
 
 [autoload]
 
-Global="*res://scripts/global.gd"
+Global="*res://assets/scripts/global.gd"
 
 [display]
 

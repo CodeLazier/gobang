@@ -1,4 +1,6 @@
 # gobang
 gobang game for me and friends.
 
-uses godot engine(3.2) and gdscript implement.
+only supports two-player games, not AI
+
+uses godot engine(3.2+) and gdscript implement.
