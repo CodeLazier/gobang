@@ -1,19 +1,11 @@
 extends Sprite
 class_name Chess
 
-# Declare member variables here. Examples:
-# var a: int = 2
-# var b: String = "text"
 signal confirm_signal
 
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	pass # Replace with function body.
 
 var ChessColor : int setget setChessColor
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta: float) -> void:
-#	pass
+
 
 func flash()->void:
 	$Tween.repeat=true
@@ -22,8 +14,8 @@ func flash()->void:
 
 func confirm()->void:
 	$Tween.repeat=false
-	for i in range(0,2):
-		$Tween.interpolate_property(self,"visible",true,false,0.32, Tween.TRANS_LINEAR, Tween.TRANS_LINEAR)
+	for _i in range(0,2):
+		$Tween.interpolate_property(self,"visible",true,false,0.23, Tween.TRANS_LINEAR, Tween.TRANS_LINEAR)
 		$Tween.start()
 		yield($Tween,'tween_all_completed')
 	

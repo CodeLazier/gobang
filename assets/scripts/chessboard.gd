@@ -9,13 +9,16 @@ var CHESS_ARRAY=[]
 var IS_WIN:bool
 var IS_CONFIRM:bool=false
 
+export(int) var confirm_max=3
+var confirm_count:int=0
+
 var chessScene=preload('res://assets/scenes/chess.tscn')
 onready var btn_restart:Button=$CenterContainer/Button
 onready var chessTip:Sprite=$chessTip
-onready var downChessSample:AudioStreamPlayer=$downChessSample
+onready var downChessSample:AudioStreamPlayer=$chessSample
 
-var Current_Input:int
-var LastChess:Chess=null
+var current_input:int
+var lastChess:Chess=null
 
 func init()->void:
 	for s in CHESS_ARRAY:
@@ -23,21 +26,23 @@ func init()->void:
 			s.queue_free()
 			
 	IS_WIN=false
-	Current_Input=Global.CHESS_COLOR.CC_BLACK
+	current_input=Global.CHESS_COLOR.CC_BLACK
 	CHESS_ARRAY.resize(0)
 	CHESS_ARRAY.resize(15*15)
 	chessTip.texture=Global.gb_texture
 
 func setChess(x,y:int,s:Chess)->void:
-	if x<0 || x>CHESS_NUMBER-1 || y<0 || y>CHESS_NUMBER-1:
-		return
-		
+	assert(inChessboard(x,y))
 	CHESS_ARRAY[x+y*CHESS_NUMBER]=s
 
+func inChessboard(x,y:int)->bool:
+	return ! (x<0 || x>CHESS_NUMBER-1 || y<0 || y>CHESS_NUMBER-1)
+
+
 func getChess(x,y:int)->Chess:
-	if x<0 || x>CHESS_NUMBER-1 || y<0 || y>CHESS_NUMBER-1:
+	if !inChessboard(x,y):
 		return null
-		
+	
 	return CHESS_ARRAY[x+y*CHESS_NUMBER] as Chess
 
 func getChessState(x,y:int)->int:
@@ -53,8 +58,8 @@ func checkChessFull()->bool:
 #检查是否五子连通
 #p 最后下的位置
 func checkChessSuccess(p:Vector2)->bool:
-	var x:int=p.x
-	var y:int=p.y
+	var x:int=int(p.x)
+	var y:int=int(p.y)
 	var c=getChessState(x,y)
 	
 	var ha=[p]
@@ -148,10 +153,11 @@ func checkChessSuccess(p:Vector2)->bool:
 
 #v 逻辑坐标
 func createChess(v:Vector2,cc:int)->Sprite:
-	var x:int=round(v.x)
-	var y:int=round(v.y)
-	if x<0 || x>CHESS_NUMBER-1 || y<0 || y>CHESS_NUMBER-1:
-		return null
+	var x:int=int(round(v.x))
+	var y:int=int(round(v.y))
+	
+	assert(inChessboard(x,y))
+
 
 	if getChess(x,y)!=null:
 		return null
@@ -160,50 +166,56 @@ func createChess(v:Vector2,cc:int)->Sprite:
 	var sprite=chessScene.instance()
 	sprite.ChessColor=cc
 	sprite.position=Vector2(x,y) * CHESS_SPACE + CHESS_ORIGIN
-	LastChess=sprite
-	add_child(sprite) # first must
-	sprite.confirm()
-
-
+	lastChess=sprite
+	add_child(sprite)
 	return sprite
 
-func downChess(e:InputEventMouseButton):
+func confirmChess(chess:Chess)->void:
+	IS_CONFIRM=true
+	chess.confirm()
+	yield(chess,'confirm_signal')
+	IS_CONFIRM=false
+
+func putChess(e:InputEventMouseButton):
 	var v=(e.position - CHESS_ORIGIN) / CHESS_SPACE
-	var vx=round(v.x)
-	var vy=round(v.y)
-	if IS_CONFIRM && LastChess!=null && getChess(vx,vy)==null:
-		var lastP=((LastChess.position - CHESS_ORIGIN) / CHESS_SPACE ).round()
-		setChess(lastP.x,lastP.y,null)
-		LastChess.queue_free()
-		LastChess=null
-		IS_CONFIRM=false
+	var vx:int=int(round(v.x))
+	var vy:int=int(round(v.y))
+
+	if inChessboard(vx,vy):
+		if IS_CONFIRM && lastChess!=null && getChess(vx,vy)==null:
+			var lastP=((lastChess.position - CHESS_ORIGIN) / CHESS_SPACE ).round()
+			setChess(int(lastP.x),int(lastP.y),null)
+			lastChess.queue_free()
+			lastChess=null
+			confirm_count+=1
 	
-	
-	var sprite= createChess(v,Current_Input)
-	if sprite!=null:
-		setChess(vx,vy,sprite)
-		IS_CONFIRM=true
-		yield(sprite,'confirm_signal')
-		IS_CONFIRM=false
-		
-		if !checkChessSuccess(v.round()):
-			if Current_Input==Global.CHESS_COLOR.CC_BLACK:
-				Current_Input=Global.CHESS_COLOR.CC_WHITE
-				chessTip.texture=Global.gw_texture
+		var chess= createChess(v,current_input)
+		if chess!=null:
+			setChess(vx,vy,chess) #先放置,用于判断是否重复确认
+			if confirm_count<confirm_max:
+				yield(confirmChess(chess),'completed')
 			else:
-				Current_Input=Global.CHESS_COLOR.CC_BLACK
-				chessTip.texture=Global.gb_texture
-		else:
-			#Win
-			IS_WIN=true
-			btn_restart.visible=true
+				IS_CONFIRM=false
+				
+			confirm_count=0
+			if !checkChessSuccess(v.round()):
+				if current_input==Global.CHESS_COLOR.CC_BLACK:
+					current_input=Global.CHESS_COLOR.CC_WHITE
+					chessTip.texture=Global.gw_texture
+				else:
+					current_input=Global.CHESS_COLOR.CC_BLACK
+					chessTip.texture=Global.gb_texture
+			else:
+				#Win
+				IS_WIN=true
+				btn_restart.visible=true
 
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var e=event as InputEventMouseButton
 		if e.pressed && !IS_WIN:
-			downChess(e)
+			putChess(e)
 
 func _ready() -> void:
 	btn_restart.visible=false

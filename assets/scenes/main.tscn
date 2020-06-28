@@ -1,8 +1,8 @@
 [gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://assets/textures/gb.png" type="Texture" id=1]
+[ext_resource path="res://assets/resources/chess_black.tres" type="Texture" id=1]
 [ext_resource path="res://assets/textures/gobang.png" type="Texture" id=2]
-[ext_resource path="res://assets/scripts/main.gd" type="Script" id=3]
+[ext_resource path="res://assets/scripts/chessboard.gd" type="Script" id=3]
 [ext_resource path="res://assets/audio/down.WAV" type="AudioStream" id=4]
 
 [node name="chessboard" type="Sprite"]
@@ -36,6 +36,6 @@ margin_right = 297.0
 margin_bottom = 166.0
 text = "Restart"
 
-[node name="downChessSample" type="AudioStreamPlayer" parent="."]
+[node name="chessSample" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 4 )
 [connection signal="pressed" from="CenterContainer/Button" to="." method="_on_Button_pressed"]
